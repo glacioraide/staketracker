@@ -1,0 +1,19 @@
+[project]
+name = "staketracker"
+version = "0.1.0"
+description = "Detects stakes on glaciers"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "opencv-python",
+    "numpy",
+    "matplotlib",
+    "scipy",
+    "piexif>=1.1.3",
+    "pandas>=3.0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "jupyterlab>=4.5.6",
+]
