@@ -412,7 +412,7 @@ if __name__ == "__main__":
     results = []
 
     input_dir = Path("photo_fixe_linceul")
-    output_dir = Path("sobel_optimized")
+    output_dir = Path("sobel_results")
     output_dir.mkdir(exist_ok=True)
     for img_path in sorted(input_dir.glob("*.JPG")):  # Process only the first 5 images
         print(f"\nProcessing {img_path.name}...")
