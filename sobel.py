@@ -240,6 +240,8 @@ def visualize(image_path: str, detected: np.ndarray, roi: tuple):
     if len(detected) > 0:
         overlay[detected[:, 1], detected[:, 0]] = [255, 0, 0, 120]
 
+    balise_height = balise_vertical_size(detected)["height_px"]
+
     # Composite onto image
     alpha = overlay[:, :, 3:4] / 255.0
     rgb = overlay[:, :, :3]
@@ -254,7 +256,7 @@ def visualize(image_path: str, detected: np.ndarray, roi: tuple):
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     axes[0].imshow(result)
-    axes[0].set_title("Full image (red=detected)")
+    axes[0].set_title(f"Full image (red=detected) - Balise height: {balise_height}px")
     axes[1].imshow(roi_zoom)
     axes[1].set_title("ROI zoom")
     for ax in axes:
@@ -293,7 +295,22 @@ def detect_balise(image_path: str, roi: tuple, best: dict) -> np.ndarray:
 
 
 def balise_vertical_size(detected: np.ndarray) -> dict:
-    """Returns vertical extent of detected balise pixels."""
+    """
+    Returns vertical extent of detected balise pixels.
+
+    Parameters
+    ----------
+    detected : numpy.ndarray
+        Detected pixel coordinates with shape ``(n, 2)``.
+
+    Returns
+    -------
+    dict
+        Dictionary containing the minimum and maximum y-coordinates of detected
+        pixels and the total height in pixels. If no pixels are detected, all
+        values are set to None or 0.
+        {"y_min": int or None, "y_max": int or None, "height_px": int}
+    """
     if len(detected) == 0:
         return {"y_min": None, "y_max": None, "height_px": 0}
     y_min = int(detected[:, 1].min())
