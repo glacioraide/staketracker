@@ -163,7 +163,11 @@ def save_results(df, output_file):
     - output_file: Output file path
     """
     print(f"Saving results to {output_file}...")
-    df.to_csv(output_file, index=False)
+    # Format numeric columns to 2 decimal places
+    df_formatted = df.copy()
+    numeric_columns = df_formatted.select_dtypes(include=["float64", "float32"]).columns
+    df_formatted[numeric_columns] = df_formatted[numeric_columns].round(2)
+    df_formatted.to_csv(output_file, index=False)
     print(f"✓ Saved {len(df)} rows to {output_file}")
 
 
