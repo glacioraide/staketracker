@@ -15,7 +15,7 @@ We recommend using uv to manage your virtual env: https://docs.astral.sh/uv/#ins
 If you use `uv`:
 
 ```bash
-uv sync
+uv sync --all-extras
 source .venv/bin/activate
 ```
 
