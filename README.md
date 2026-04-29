@@ -10,7 +10,7 @@ Alpha version under rapid changes.
 We recommend using uv to manage your virtual env: https://docs.astral.sh/uv/#installation
 
 
-### Option 1: uv workflow
+### 1. create a virtual env 
 
 If you use `uv`:
 
@@ -19,7 +19,9 @@ uv sync
 source .venv/bin/activate
 ```
 
-### Option 2: editable install (recommended for development)
+### 2. Install the lib 
+
+We recommend to use editable install for developments. If you simply want to use the lib, remove the `-e` option.
 
 ```bash
 python -m venv .venv
@@ -27,24 +29,19 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-With development extras:
+With development extras (in particular jupyter-lab):
 
 ```bash
 pip install -e .[dev]
 ```
 
-### Option 3: standard install
-
-```bash
-pip install .
-```
 
 
 ## Script usage
 
 Scripts are under `scripts/`.
 
-### 1) Detect stakes in images (pixel heights CSV)
+### 1. Detect stakes in images (pixel heights CSV)
 
 ```bash
 python scripts/detect_stakes.py \
@@ -69,7 +66,7 @@ Main output is `detection_results.csv` (with provenance comment header) in a dat
 > Note: To find the ROI, select an image where the stake is the longest and open it with an image viewer (Paint, Preview, https://pixspy.com/, ...) that displays pixel coordinates. Pixel coordinates are defined from the top-left corner (0,0).
 
 
-### 2) Fetch meteorological data from Open-Meteo
+### 2. Fetch meteorological data from Open-Meteo
 
 ```bash
 python scripts/fetch_meteo.py \
@@ -84,7 +81,7 @@ If `--output` is omitted, the script auto-generates:
 
 `weather_data_lat<lat>_lon<lon>_<start>_to_<end>.csv`
 
-### 3) Analyze detection CSVs into snow-level outputs
+### 3. Analyze detection CSVs into snow-level outputs
 
 ```bash
 python scripts/analyze_results.py \
@@ -109,13 +106,6 @@ Disable plots (CSV outputs only):
 python scripts/analyze_results.py --input analysis/detection_run_2026-04-29/detection_results.csv --no-plots
 ```
 
-Outputs written to a date-stamped output folder:
-
-- `filtered_results.csv`
-- `results_with_snow_level.csv`
-- `balise_height_vs_time.png` (unless `--no-plots`)
-- `snow_level_vs_time.png` (unless `--no-plots`)
-- `snow_level_with_precipitation.png` (only when `--meteo` is set)
 
 ## Python API usage
 
