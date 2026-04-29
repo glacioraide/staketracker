@@ -18,9 +18,14 @@ a different camera setup or after running parameter optimisation.
 
 Optionally pass ``--save-annotated`` to write one PNG per image with the
 detected pixels overlaid (useful for quality control).
+
+Images are processed in parallel using all available CPU cores by default.
+Use ``--workers N`` to restrict parallelism.
 """
 
 import argparse
+import os
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
@@ -35,6 +40,52 @@ from staketracker.detection import (
     visualize,
 )
 from staketracker.io import save_results
+
+
+# ---------------------------------------------------------------------------
+# Worker function (module-level so it is picklable on macOS / Windows spawn)
+# ---------------------------------------------------------------------------
+
+
+def _process_one(args: tuple) -> dict:
+    """Detect stakes in a single image and optionally save an annotated PNG.
+
+    Parameters
+    ----------
+    args : tuple
+        ``(img_path, roi, detection_params, annotated_dir)``
+        where *annotated_dir* is ``None`` when ``--save-annotated`` is not set.
+
+    Returns
+    -------
+    dict
+        One result row ready to be appended to the output DataFrame.
+    """
+    img_path, roi, detection_params, annotated_dir = args
+
+    detected = detect_stakes(img_path.as_posix(), roi, detection_params)
+    size = stakes_vertical_size(detected)
+    creation_date = read_image_date(img_path.as_posix())
+
+    if annotated_dir is not None:
+        # Each subprocess needs its own non-interactive backend.
+        matplotlib.use("Agg")
+        fig, _ = visualize(img_path.as_posix(), detected, roi)
+        fig.savefig(
+            Path(annotated_dir) / f"{img_path.stem}_detected.png",
+            dpi=100,
+            bbox_inches="tight",
+        )
+        plt.close(fig)
+
+    return {
+        "image": img_path.name,
+        "detected_pixels": len(detected),
+        "balise_height_px": size["height_px"],
+        "y_min": size["y_min"],
+        "y_max": size["y_max"],
+        "creation_date": creation_date,
+    }
 
 
 def main() -> None:
@@ -108,11 +159,25 @@ def main() -> None:
         action="store_true",
         help="Save a PNG with detections overlaid for every processed image (slow)",
     )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=os.cpu_count(),
+        metavar="N",
+        help="Number of parallel worker processes (default: all CPU cores)",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing output directory if it already exists",
+    )
     args = parser.parse_args()
 
     run_date = datetime.now().strftime("%Y-%m-%d")
     generated_at = datetime.now().astimezone().isoformat(timespec="seconds")
-    output_dir = Path(f"{args.output}_{run_date}")
+    output_dir = Path(f"{args.output}")
+    if output_dir.exists() and not args.overwrite:
+        raise ValueError(f"Output directory already exists: {output_dir}. Use --overwrite to overwrite it.")
     output_dir.mkdir(parents=True, exist_ok=True)
     print(f"Output directory: {output_dir}\n")
 
@@ -147,33 +212,28 @@ def main() -> None:
     print("=" * 70)
     print("PROCESSING IMAGES")
     print("=" * 70)
+    print(f"  Parallel workers : {args.workers}")
+    print()
 
-    rows = []
-    for img_path in images:
-        detected = detect_stakes(img_path.as_posix(), roi, detection_params)
-        size = stakes_vertical_size(detected)
-        creation_date = read_image_date(img_path.as_posix())
-
-        if args.save_annotated:
-            fig, _ = visualize(img_path.as_posix(), detected, roi)
-            fig.savefig(
-                annotated_dir / f"{img_path.stem}_detected.png",
-                dpi=100,
-                bbox_inches="tight",
-            )
-            plt.close(fig)
-
-        rows.append(
-            {
-                "image": img_path.name,
-                "detected_pixels": len(detected),
-                "balise_height_px": size["height_px"],
-                "y_min": size["y_min"],
-                "y_max": size["y_max"],
-                "creation_date": creation_date,
-            }
+    # Build the argument list for workers.
+    # annotated_dir is converted to str so it remains picklable across platforms.
+    worker_args = [
+        (
+            img_path,
+            roi,
+            detection_params,
+            str(annotated_dir) if args.save_annotated else None,
         )
-        print(f"  {img_path.name}: {size['height_px']} px  ({len(detected)} detected pixels)")
+        for img_path in images
+    ]
+
+    rows: list[dict] = []
+    with ProcessPoolExecutor(max_workers=args.workers) as executor:
+        futures = {executor.submit(_process_one, a): a[0] for a in worker_args}
+        for future in as_completed(futures):
+            row = future.result()
+            rows.append(row)
+            print(f"  {row['image']}: {row['balise_height_px']} px  ({row['detected_pixels']} detected pixels)")
 
     print()
     print("=" * 70)

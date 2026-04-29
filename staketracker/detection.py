@@ -131,7 +131,33 @@ def crop_roi(img: np.ndarray, roi: tuple) -> np.ndarray:
     return img[y : y + h, x : x + w]
 
 
-def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, opening_kernel: int = 1) -> np.ndarray:
+def clean_detection(sobel_binary):
+    """
+    Apply morphological operations to clean up the binary detection mask.
+        - Closing to fill small gaps between detected pixels.
+        - Connected component analysis to keep only the largest cluster of pixels.
+    """
+    mask = np.asarray(sobel_binary)
+
+    kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    mask = cv2.morphologyEx(sobel_binary, cv2.MORPH_CLOSE, kernel_close, iterations=1)
+
+    # kernel_open = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel_open, iterations=1)
+
+    # Keep only the largest connected component to remove isolated noise pixels
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
+
+    if num_labels < 2:  # No components found (only background)
+        return np.zeros_like(sobel_binary)
+
+    # stats[0] = background → skip it by starting from index 1
+    largest = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
+
+    return (labels == largest).astype(np.uint8) * 255
+
+
+def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, opening_kernel: int = 3) -> np.ndarray:
     """Detect high-gradient pixels inside a region of interest.
 
     Parameters
@@ -157,11 +183,44 @@ def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, opening_
     patch = sobel_full[y : y + h, x : x + w]
 
     binary = (patch >= threshold).astype(np.uint8) * 255
+    binary = clean_detection(binary)
 
     local_ys, local_xs = np.where(binary > 0)
     if len(local_xs) == 0:
         return np.empty((0, 2), dtype=int)
     return np.column_stack([local_xs + x, local_ys + y])
+
+
+def apply_closing(binary: np.ndarray, kernel_size: int = 1) -> np.ndarray:
+    """Apply morphological closing to fill small gaps between detected pixels.
+
+    Parameters
+    ----------
+    binary : numpy.ndarray
+        Binary mask (uint8, values 0 or 255).
+    kernel_size : int, default 1
+        Size of the square structuring element.
+
+    Returns
+    -------
+    numpy.ndarray
+        Closed binary mask.
+    """
+    mask = np.asarray(binary)
+    if mask.ndim != 2:
+        raise ValueError("apply_closing expects a 2D binary mask")
+
+    if mask.dtype != np.uint8:
+        # OpenCV morphology requires integer/float image types; convert to
+        # canonical binary uint8 values (0, 255) for stable behavior.
+        mask = (mask > 0).astype(np.uint8) * 255
+
+    kernel_size = max(1, int(kernel_size))
+    if kernel_size == 1:
+        return mask
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
+    return cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
 
 def apply_opening(binary: np.ndarray, kernel_size: int = 1) -> np.ndarray:
@@ -179,8 +238,21 @@ def apply_opening(binary: np.ndarray, kernel_size: int = 1) -> np.ndarray:
     numpy.ndarray
         Opened binary mask.
     """
+    mask = np.asarray(binary)
+    if mask.ndim != 2:
+        raise ValueError("apply_opening expects a 2D binary mask")
+
+    if mask.dtype != np.uint8:
+        # OpenCV morphology requires integer/float image types; convert to
+        # canonical binary uint8 values (0, 255) for stable behavior.
+        mask = (mask > 0).astype(np.uint8) * 255
+
+    kernel_size = max(1, int(kernel_size))
+    if kernel_size == 1:
+        return mask
+
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
-    return cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+    return cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
 
 # ---------------------------------------------------------------------------

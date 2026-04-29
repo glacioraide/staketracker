@@ -72,11 +72,19 @@ def main() -> None:
         action="store_true",
         help="Skip generating plots",
     )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing output directory if it already exists",
+    )
+
     args = parser.parse_args()
 
     run_date = datetime.now().strftime("%Y-%m-%d")
     generated_at = datetime.now().astimezone().isoformat(timespec="seconds")
-    output_dir = Path(f"{args.output}_{run_date}")
+    output_dir = Path(f"{args.output}")
+    if output_dir.exists() and not args.overwrite:
+        raise ValueError(f"Output directory already exists: {output_dir}. Use --overwrite to overwrite it.")
     output_dir.mkdir(parents=True, exist_ok=True)
     print(f"Output directory: {output_dir}\n")
 
