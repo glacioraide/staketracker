@@ -188,7 +188,7 @@ def apply_opening(binary: np.ndarray, kernel_size: int = 1) -> np.ndarray:
 # ---------------------------------------------------------------------------
 
 
-def balise_vertical_size(detected: np.ndarray) -> dict:
+def stakes_vertical_size(detected: np.ndarray) -> dict:
     """Return the vertical extent of detected stake pixels.
 
     Parameters
@@ -242,7 +242,7 @@ def read_image_date(image_path: str) -> datetime | None:
 # ---------------------------------------------------------------------------
 
 
-def detect_balise(image_path: str, roi: tuple, best: dict) -> np.ndarray:
+def detect_stakes(image_path: str, roi: tuple, best: dict) -> np.ndarray:
     """Detect stake pixels in a single image using pre-optimised parameters.
 
     Parameters
@@ -350,11 +350,11 @@ def optimize_params(gray: np.ndarray, roi: tuple, gt: np.ndarray) -> dict:
         ``clahe_clip``, ``clahe_tile``, and the corresponding ``iou`` score.
     """
     bounds = [
-        (0, 1),      # wx
-        (1, 254),    # threshold
-        (1, 7),      # ksize
+        (0, 1),  # wx
+        (1, 254),  # threshold
+        (1, 7),  # ksize
         (0.5, 4.0),  # clahe_clip
-        (8, 8),      # clahe_tile (fixed at 8 for speed)
+        (8, 8),  # clahe_tile (fixed at 8 for speed)
     ]
     result = differential_evolution(
         objective,
@@ -411,7 +411,7 @@ def visualize(image_path: str, detected: np.ndarray, roi: tuple):
     if len(detected) > 0:
         overlay[detected[:, 1], detected[:, 0]] = [255, 0, 0, 120]
 
-    balise_height = balise_vertical_size(detected)["height_px"]
+    stakes_height = stakes_vertical_size(detected)["height_px"]
 
     alpha = overlay[:, :, 3:4] / 255.0
     rgb = overlay[:, :, :3]
@@ -425,7 +425,7 @@ def visualize(image_path: str, detected: np.ndarray, roi: tuple):
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     axes[0].imshow(result)
-    axes[0].set_title(f"Full image (red=detected) – balise height: {balise_height} px")
+    axes[0].set_title(f"Full image (red=detected) – stakes height: {stakes_height} px")
     axes[1].imshow(roi_zoom)
     axes[1].set_title("ROI zoom")
     for ax in axes:
