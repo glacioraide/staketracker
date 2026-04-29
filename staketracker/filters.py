@@ -143,7 +143,10 @@ def add_moving_average(
     averaged = results if inplace else results.copy()
     averaged["creation_date"] = pd.to_datetime(averaged["creation_date"], errors="coerce")
     averaged["balise_height_px_moving_average"] = (
-        averaged.set_index("creation_date")["balise_height_px"].rolling(window=rolling_window, min_periods=1).mean().to_numpy()
+        averaged.set_index("creation_date")["balise_height_px"]
+        .rolling(window=rolling_window, min_periods=1)
+        .mean()
+        .to_numpy()
     )
     return averaged
 
