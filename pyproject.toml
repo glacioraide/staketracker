@@ -27,10 +27,22 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "jupyterlab>=4.5.6",
+    "ruff",
 ]
 
 [tool.setuptools.packages.find]
 include = ["staketracker*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["staketracker"]
 
 [tool.setuptools_scm]
 # Writes _version.py into the package so the version is available at runtime

@@ -11,7 +11,9 @@ from .detection import stakes_vertical_size
 
 def plot_height_vs_time(raw_results, filtered_results, output_file=None):
     fig, ax = plt.subplots(figsize=(14, 6))
-    raw_results.plot(x="creation_date", y="balise_height_px", ax=ax, alpha=0.35, linewidth=1, label="Hauteur détectée (brute)")
+    raw_results.plot(
+        x="creation_date", y="balise_height_px", ax=ax, alpha=0.35, linewidth=1, label="Hauteur détectée (brute)"
+    )
     filtered_results.plot.scatter(
         x="creation_date",
         y="balise_height_px_moving_average",
@@ -59,13 +61,21 @@ def plot_snow_level(results_m, output_file=None, **kwargs):
 def plot_snow_level_with_meteo(results_m, meteo_file, output_file=None):
     try:
         meteo = pd.read_csv(meteo_file)
-        meteo["date"] = pd.to_datetime(meteo["date"], errors="coerce", utc=True).dt.tz_convert("Europe/Paris").dt.tz_localize(None)
+        meteo["date"] = (
+            pd.to_datetime(meteo["date"], errors="coerce", utc=True).dt.tz_convert("Europe/Paris").dt.tz_localize(None)
+        )
     except FileNotFoundError:
         print(f"Warning: Meteorological file not found: {meteo_file}")
         return
     fig, ax = plt.subplots(figsize=(16, 6))
     results_m.plot.scatter(
-        x="creation_date", y="snow_level_m", ax=ax, label="Niveau de neige (balise)", color="steelblue", marker=".", s=30
+        x="creation_date",
+        y="snow_level_m",
+        ax=ax,
+        label="Niveau de neige (balise)",
+        color="steelblue",
+        marker=".",
+        s=30,
     )
     date_min = results_m["creation_date"].min()
     date_max = results_m["creation_date"].max()
