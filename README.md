@@ -65,6 +65,10 @@ python scripts/detect_stakes.py \
 
 Main output is `detection_results.csv` (with provenance comment header) in a date-stamped directory such as `analysis/detection_run_YYYY-MM-DD`.
 
+
+> Note: To find the ROI, select an image where the stake is the longest and open it with an image viewer (Paint, Preview, https://pixspy.com/, ...) that displays pixel coordinates. Pixel coordinates are defined from the top-left corner (0,0).
+
+
 ### 2) Fetch meteorological data from Open-Meteo
 
 ```bash

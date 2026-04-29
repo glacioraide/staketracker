@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import pandas as pd
-from .detection import balise_vertical_size
+from .detection import stakes_vertical_size
 
 # ---------------------------------------------------------------------------
 # Plotting Functions
@@ -118,7 +118,7 @@ def visualize(image_path: str, detected: np.ndarray, roi: tuple):
     if len(detected) > 0:
         overlay[detected[:, 1], detected[:, 0]] = [255, 0, 0, 120]
 
-    balise_height = balise_vertical_size(detected)["height_px"]
+    stakes_height = stakes_vertical_size(detected)["height_px"]
 
     # Composite onto image
     alpha = overlay[:, :, 3:4] / 255.0
@@ -134,7 +134,7 @@ def visualize(image_path: str, detected: np.ndarray, roi: tuple):
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     axes[0].imshow(result)
-    axes[0].set_title(f"Full image (red=detected) - Balise height: {balise_height}px")
+    axes[0].set_title(f"Full image (red=detected) - Stakes height: {stakes_height}px")
     axes[1].imshow(roi_zoom)
     axes[1].set_title("ROI zoom")
     for ax in axes:

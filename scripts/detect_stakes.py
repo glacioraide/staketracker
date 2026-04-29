@@ -29,8 +29,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from staketracker.detection import (
-    balise_vertical_size,
-    detect_balise,
+    stakes_vertical_size,
+    detect_stakes,
     read_image_date,
     visualize,
 )
@@ -40,7 +40,7 @@ from staketracker.io import save_results
 def main() -> None:
     """Batch-detect the stake in every image and write a detection CSV."""
     parser = argparse.ArgumentParser(
-        description="Detect the stake in JPEG images and record balise heights in pixels",
+        description="Detect the stake in JPEG images and record stakes heights in pixels",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -150,8 +150,8 @@ def main() -> None:
 
     rows = []
     for img_path in images:
-        detected = detect_balise(img_path.as_posix(), roi, detection_params)
-        size = balise_vertical_size(detected)
+        detected = detect_stakes(img_path.as_posix(), roi, detection_params)
+        size = stakes_vertical_size(detected)
         creation_date = read_image_date(img_path.as_posix())
 
         if args.save_annotated:
