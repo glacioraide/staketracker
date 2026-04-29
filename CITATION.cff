@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "staketracker"
+abstract: "Python package for detecting glacier stake pixels in images, building
+  time-series of stake height, and estimating snow level through filtering and
+  calibration."
+repository-code: "https://github.com/glacioraide/staketracker"
+license: MIT
+date-released: "2026-04-29"
+authors:
+  - family-names: Vuillaume
+    given-names: Thomas
+    affiliation: "LAPP, Université Savoie Mont Blanc, CNRS, France"
+    orcid: "0000-0002-5686-2078"
+keywords:
+  - glacier
+  - stake
+  - snow
+  - ablation
+  - computer vision
+  - glaciology
