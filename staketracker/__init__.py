@@ -1,16 +1,17 @@
 """Top-level package for *staketracker*.
 
-The public API is organised into four focused sub-modules:
+The public API is organised into five focused sub-modules:
 
 * :mod:`staketracker.detection` — image loading, edge detection, pixel
-  detection, parameter optimisation, and visualisation.
+  detection, and parameter optimisation.
 * :mod:`staketracker.filters` — time-series filtering, smoothing, and
   unit conversion for detection results.
 * :mod:`staketracker.io` — loading and saving detection result CSV files.
 * :mod:`staketracker.meteo` — meteorological data retrieval via Open-Meteo.
+* :mod:`staketracker.plot` — detection overlays and time-series plots.
 
 The most commonly used symbols are re-exported here for convenience so that
-``import staketracker; staketracker.detect_balise(...)`` works without
+``import staketracker; staketracker.detect_stakes(...)`` works without
 knowing which sub-module owns a function.
 """
 
@@ -26,14 +27,12 @@ from .detection import (
     apply_weighted_sobel,
     crop_roi,
     detect_pixels,
-    apply_opening,
     stakes_vertical_size,
     read_image_date,
     detect_stakes,
     pixel_iou,
     objective,
     optimize_params,
-    visualize,
 )
 from .filters import (
     filter_rapid_changes,
@@ -44,6 +43,7 @@ from .filters import (
 )
 from .io import load_data, save_results
 from .meteo import fetch_weather_data
+from .plot import visualize
 
 __all__ = [
     "__version__",
@@ -52,14 +52,12 @@ __all__ = [
     "apply_weighted_sobel",
     "crop_roi",
     "detect_pixels",
-    "apply_opening",
     "stakes_vertical_size",
     "read_image_date",
     "detect_stakes",
     "pixel_iou",
     "objective",
     "optimize_params",
-    "visualize",
     "filter_rapid_changes",
     "filter_min_max_height",
     "apply_filters",
@@ -69,4 +67,6 @@ __all__ = [
     "save_results",
     # meteo
     "fetch_weather_data",
+    # plot
+    "visualize",
 ]

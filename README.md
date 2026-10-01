@@ -7,34 +7,34 @@ Alpha version under rapid changes.
 
 ## Installation
 
-We recommend using uv to manage your virtual env: https://docs.astral.sh/uv/#installation
+Requires Python 3.12 or later. Pick one of the two options below.
 
+Optional extras:
+- `dev`: ruff and pytest
+- `jupyter`: JupyterLab and ipywidgets, needed for the notebooks
 
-### 1. create a virtual env 
+### Option A: uv (recommended)
 
-If you use `uv`:
+Install uv first: https://docs.astral.sh/uv/#installation
 
 ```bash
 uv sync --all-extras
 source .venv/bin/activate
 ```
 
-### 2. Install the lib 
+This creates `.venv`, installs the exact versions pinned in `uv.lock`, and installs staketracker in editable mode with all extras.
 
-We recommend to use editable install for developments. If you simply want to use the lib, remove the `-e` option.
+### Option B: venv and pip
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -e ".[dev,jupyter]"
 ```
 
-With development extras (in particular jupyter-lab):
+`-e` installs in editable mode, so changes to the code apply without reinstalling. If you only want to use the package, drop `-e` and the extras: `pip install .`
 
-```bash
-pip install -e .[dev]
-```
-
+pip ignores `uv.lock`, so you may get newer dependency versions than the ones tested.
 
 
 ## Script usage
@@ -60,7 +60,7 @@ python scripts/detect_stakes.py \
 	--save-annotated
 ```
 
-Main output is `detection_results.csv` (with provenance comment header) in a date-stamped directory such as `analysis/detection_run_YYYY-MM-DD`.
+Main output is `detection_results.csv` (with a provenance comment header), written to the `--output` directory. Both `detect_stakes.py` and `analyze_results.py` refuse to write into an existing directory unless you pass `--overwrite`.
 
 
 > Note: To find the ROI, select an image where the stake is the longest and open it with an image viewer (Paint, Preview, https://pixspy.com/, ...) that displays pixel coordinates. Pixel coordinates are defined from the top-left corner (0,0).
@@ -85,7 +85,7 @@ If `--output` is omitted, the script auto-generates:
 
 ```bash
 python scripts/analyze_results.py \
-	--input analysis/detection_run_2026-04-29/detection_results.csv \
+	--input analysis/detection_run/detection_results.csv \
 	--output analysis/run_01 \
 	--px-per-metre 177
 ```
@@ -94,7 +94,7 @@ Optional meteorological overlay plot:
 
 ```bash
 python scripts/analyze_results.py \
-	--input analysis/detection_run_2026-04-29/detection_results.csv \
+	--input analysis/detection_run/detection_results.csv \
 	--output analysis/run_with_meteo \
 	--px-per-metre 177 \
 	--meteo analysis/weather_data.csv
@@ -103,7 +103,7 @@ python scripts/analyze_results.py \
 Disable plots (CSV outputs only):
 
 ```bash
-python scripts/analyze_results.py --input analysis/detection_run_2026-04-29/detection_results.csv --no-plots
+python scripts/analyze_results.py --input analysis/detection_run/detection_results.csv --no-plots
 ```
 
 
@@ -119,7 +119,7 @@ print(staketracker.__version__)
 ### Detection on one image
 
 ```python
-from staketracker import detect_balise, balise_vertical_size
+from staketracker import detect_stakes, stakes_vertical_size
 
 best = {
 		"wx": 0.9,
@@ -130,8 +130,8 @@ best = {
 }
 roi = (1835, 330, 20, 80)  # x, y, width, height
 
-detected = detect_balise("photo_fixe_linceul/RCNX0094.JPG", roi, best)
-size = balise_vertical_size(detected)
+detected = detect_stakes("photo_fixe_linceul/RCNX0094.JPG", roi, best)
+size = stakes_vertical_size(detected)
 print(size)
 ```
 
@@ -171,7 +171,7 @@ print(df.head())
 ## Running tests
 
 ```bash
-pytest tests/ -v
+pytest -v
 ```
 
 ## Notes
