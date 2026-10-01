@@ -9,10 +9,10 @@ DIR_NAME=$(basename "$INPUT_DIR")
 OUTPUT_DIR="../../EDYTEM/Traitement_Images/RESULTS/${DIR_NAME}_${TODAY}"
 ROI="1535 330 30 80"
 THRESHOLD=140
-PX_PER_METER=177.0
+PX_PER_METRE=177.0
 
 python scripts/detect_stakes.py --input-dir "$INPUT_DIR" --roi $ROI --output "$OUTPUT_DIR" --save-annotated --threshold $THRESHOLD
-python scripts/analyze_results.py --input "$OUTPUT_DIR/detection_results.csv" --output "$OUTPUT_DIR/analysis" --px-per-metre $PX_PER_METER --meteo analysis/weather_data.csv
+python scripts/analyze_results.py --input "$OUTPUT_DIR/detection_results.csv" --output "$OUTPUT_DIR/analysis" --px-per-metre $PX_PER_METRE --meteo analysis/weather_data.csv
 
 
 ## linceul 10/11/2024 - 31/03/2025
@@ -21,10 +21,10 @@ DIR_NAME=$(basename "$INPUT_DIR")
 OUTPUT_DIR="../../EDYTEM/Traitement_Images/RESULTS/${DIR_NAME}_${TODAY}"
 ROI="1510 330 40 100"
 THRESHOLD=200
-PX_PER_METER=177.0
+PX_PER_METRE=177.0
 
 python scripts/detect_stakes.py --input-dir "$INPUT_DIR" --roi $ROI --output "$OUTPUT_DIR" --save-annotated --threshold $THRESHOLD --overwrite
-python scripts/analyze_results.py --input "$OUTPUT_DIR/detection_results.csv" --output "$OUTPUT_DIR/analysis" --px-per-metre $PX_PER_METER --meteo analysis/weather_data.csv
+python scripts/analyze_results.py --input "$OUTPUT_DIR/detection_results.csv" --output "$OUTPUT_DIR/analysis" --px-per-metre $PX_PER_METRE --meteo analysis/weather_data.csv
 
 
 ## linceul 01/04/2025 - 10/10/2025
@@ -33,7 +33,7 @@ DIR_NAME=$(basename "$INPUT_DIR")
 OUTPUT_DIR="../../EDYTEM/Traitement_Images/RESULTS/${DIR_NAME}_${TODAY}"
 ROI="1820 310 50 140"
 THRESHOLD=140
-PX_PER_METER=177.0
+PX_PER_METRE=177.0
 
 python scripts/detect_stakes.py --input-dir "$INPUT_DIR" --roi $ROI --output "$OUTPUT_DIR" --save-annotated --threshold $THRESHOLD --overwrite
-python scripts/analyze_results.py --input "$OUTPUT_DIR/detection_results.csv" --output "$OUTPUT_DIR/analysis" --px-per-metre $PX_PER_METER --meteo analysis/weather_data.csv
+python scripts/analyze_results.py --input "$OUTPUT_DIR/detection_results.csv" --output "$OUTPUT_DIR/analysis" --px-per-metre $PX_PER_METRE --meteo analysis/weather_data.csv

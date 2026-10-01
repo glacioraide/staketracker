@@ -12,13 +12,12 @@ The module also exposes helpers for parameter optimisation (``optimize_params``)
 and for reading EXIF capture dates from JPEG files (``read_image_date``).
 """
 
+from datetime import datetime
+
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.optimize import differential_evolution
-from datetime import datetime
 import piexif
-
+from scipy.optimize import differential_evolution
 
 # ---------------------------------------------------------------------------
 # Image I/O
@@ -131,33 +130,41 @@ def crop_roi(img: np.ndarray, roi: tuple) -> np.ndarray:
     return img[y : y + h, x : x + w]
 
 
-def clean_detection(sobel_binary):
+def clean_detection(binary: np.ndarray, closing_kernel: int = 3) -> np.ndarray:
+    """Clean a binary detection mask.
+
+    Applies a morphological closing to fill small gaps between detected
+    pixels, then keeps only the largest connected component to remove
+    isolated noise.
+
+    Parameters
+    ----------
+    binary : numpy.ndarray
+        Binary mask (uint8, values 0 or 255).
+    closing_kernel : int, default 3
+        Size of the square structuring element used for the closing.
+        Set to 1 to disable the closing.
+
+    Returns
+    -------
+    numpy.ndarray
+        Cleaned binary mask (uint8, values 0 or 255).
     """
-    Apply morphological operations to clean up the binary detection mask.
-        - Closing to fill small gaps between detected pixels.
-        - Connected component analysis to keep only the largest cluster of pixels.
-    """
-    mask = np.asarray(sobel_binary)
+    mask = binary
+    if closing_kernel > 1:
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (closing_kernel, closing_kernel))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-    kernel_close = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    mask = cv2.morphologyEx(sobel_binary, cv2.MORPH_CLOSE, kernel_close, iterations=1)
-
-    # kernel_open = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-    # mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel_open, iterations=1)
-
-    # Keep only the largest connected component to remove isolated noise pixels
     num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
+    if num_labels < 2:  # only background
+        return np.zeros_like(binary)
 
-    if num_labels < 2:  # No components found (only background)
-        return np.zeros_like(sobel_binary)
-
-    # stats[0] = background → skip it by starting from index 1
+    # stats[0] is the background, skip it
     largest = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
-
     return (labels == largest).astype(np.uint8) * 255
 
 
-def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, opening_kernel: int = 3) -> np.ndarray:
+def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, closing_kernel: int = 3) -> np.ndarray:
     """Detect high-gradient pixels inside a region of interest.
 
     Parameters
@@ -168,9 +175,8 @@ def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, opening_
         Region of interest defined as ``(x, y, width, height)``.
     threshold : float
         Minimum Sobel magnitude required for a pixel to be retained.
-    opening_kernel : int, default 1
-        Size of the square structuring element used for morphological opening.
-        Set to 1 to disable opening.
+    closing_kernel : int, default 3
+        Passed to :func:`clean_detection`. Set to 1 to disable the closing.
 
     Returns
     -------
@@ -183,76 +189,12 @@ def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, opening_
     patch = sobel_full[y : y + h, x : x + w]
 
     binary = (patch >= threshold).astype(np.uint8) * 255
-    binary = clean_detection(binary)
+    binary = clean_detection(binary, closing_kernel)
 
     local_ys, local_xs = np.where(binary > 0)
     if len(local_xs) == 0:
         return np.empty((0, 2), dtype=int)
     return np.column_stack([local_xs + x, local_ys + y])
-
-
-def apply_closing(binary: np.ndarray, kernel_size: int = 1) -> np.ndarray:
-    """Apply morphological closing to fill small gaps between detected pixels.
-
-    Parameters
-    ----------
-    binary : numpy.ndarray
-        Binary mask (uint8, values 0 or 255).
-    kernel_size : int, default 1
-        Size of the square structuring element.
-
-    Returns
-    -------
-    numpy.ndarray
-        Closed binary mask.
-    """
-    mask = np.asarray(binary)
-    if mask.ndim != 2:
-        raise ValueError("apply_closing expects a 2D binary mask")
-
-    if mask.dtype != np.uint8:
-        # OpenCV morphology requires integer/float image types; convert to
-        # canonical binary uint8 values (0, 255) for stable behavior.
-        mask = (mask > 0).astype(np.uint8) * 255
-
-    kernel_size = max(1, int(kernel_size))
-    if kernel_size == 1:
-        return mask
-
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
-    return cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-
-
-def apply_opening(binary: np.ndarray, kernel_size: int = 1) -> np.ndarray:
-    """Apply morphological opening to remove small noise pixels.
-
-    Parameters
-    ----------
-    binary : numpy.ndarray
-        Binary mask (uint8, values 0 or 255).
-    kernel_size : int, default 1
-        Size of the square structuring element.
-
-    Returns
-    -------
-    numpy.ndarray
-        Opened binary mask.
-    """
-    mask = np.asarray(binary)
-    if mask.ndim != 2:
-        raise ValueError("apply_opening expects a 2D binary mask")
-
-    if mask.dtype != np.uint8:
-        # OpenCV morphology requires integer/float image types; convert to
-        # canonical binary uint8 values (0, 255) for stable behavior.
-        mask = (mask > 0).astype(np.uint8) * 255
-
-    kernel_size = max(1, int(kernel_size))
-    if kernel_size == 1:
-        return mask
-
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
-    return cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
 
 # ---------------------------------------------------------------------------
@@ -325,7 +267,8 @@ def detect_stakes(image_path: str, roi: tuple, best: dict) -> np.ndarray:
         Region of interest defined as ``(x, y, width, height)``.
     best : dict
         Optimised parameter dictionary with keys ``wx``, ``threshold``,
-        ``ksize``, ``clahe_clip``, and ``clahe_tile``.
+        ``ksize``, ``clahe_clip``, and ``clahe_tile``.  Optional key
+        ``closing_kernel`` (default 3) is passed to :func:`detect_pixels`.
 
     Returns
     -------
@@ -340,7 +283,7 @@ def detect_stakes(image_path: str, roi: tuple, best: dict) -> np.ndarray:
         clahe_clip=best["clahe_clip"],
         clahe_tile=best["clahe_tile"],
     )
-    return detect_pixels(sobel, roi, best["threshold"])
+    return detect_pixels(sobel, roi, best["threshold"], best.get("closing_kernel", 3))
 
 
 # ---------------------------------------------------------------------------
@@ -450,58 +393,3 @@ def optimize_params(gray: np.ndarray, roi: tuple, gt: np.ndarray) -> dict:
         "clahe_tile": clahe_tile,
         "iou": -result.fun,
     }
-
-
-# ---------------------------------------------------------------------------
-# Visualisation
-# ---------------------------------------------------------------------------
-
-
-def visualize(image_path: str, detected: np.ndarray, roi: tuple):
-    """Overlay detections on an image and return full and zoomed views.
-
-    Parameters
-    ----------
-    image_path : str
-        Path to the image to display.
-    detected : numpy.ndarray
-        Detected pixel coordinates with shape ``(n, 2)``.
-    roi : tuple
-        Region of interest defined as ``(x, y, width, height)``.
-
-    Returns
-    -------
-    tuple
-        Matplotlib ``(figure, axes)`` with the full-image view and the ROI
-        zoom.
-    """
-    img = cv2.imread(image_path)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-    overlay = np.zeros((*img.shape[:2], 4), dtype=np.uint8)
-
-    if len(detected) > 0:
-        overlay[detected[:, 1], detected[:, 0]] = [255, 0, 0, 120]
-
-    stakes_height = stakes_vertical_size(detected)["height_px"]
-
-    alpha = overlay[:, :, 3:4] / 255.0
-    rgb = overlay[:, :, :3]
-    result = (img * (1 - alpha) + rgb * alpha).astype(np.uint8)
-
-    x, y, w, h = roi
-    cv2.rectangle(result, (x, y), (x + w, y + h), (255, 255, 0), 1)
-
-    pad = 20
-    roi_zoom = result[y - pad : y + h + pad, x - pad : x + w + pad]
-
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-    axes[0].imshow(result)
-    axes[0].set_title(f"Full image (red=detected) – stakes height: {stakes_height} px")
-    axes[1].imshow(roi_zoom)
-    axes[1].set_title("ROI zoom")
-    for ax in axes:
-        ax.axis("off")
-
-    plt.tight_layout()
-    return fig, axes
