@@ -49,7 +49,88 @@ def load_gray(image_path: str) -> np.ndarray:
 
 # ---------------------------------------------------------------------------
 # Edge enhancement
+#
+# apply_weighted_sobel() chains three steps, each available on its own so that
+# notebooks/pipeline_step_by_step.ipynb can show the intermediate images:
+# enhance_contrast() -> weighted_gradient() -> normalize_gradient().
 # ---------------------------------------------------------------------------
+
+
+def enhance_contrast(gray: np.ndarray, blur_size: int = 5, clahe_clip: float = 3.0, clahe_tile: int = 8) -> np.ndarray:
+    """Blur the image, then enhance local contrast with CLAHE.
+
+    Parameters
+    ----------
+    gray : numpy.ndarray
+        Input grayscale image.
+    blur_size : int, default 5
+        Gaussian blur kernel size, removes sensor noise.
+    clahe_clip : float, default 3.0
+        Clip limit used by CLAHE.
+    clahe_tile : int, default 8
+        Tile grid size used by CLAHE.  Values below 2 are rejected by OpenCV.
+
+    Returns
+    -------
+    numpy.ndarray
+        Enhanced 8-bit grayscale image.
+    """
+    blurred = cv2.GaussianBlur(gray, (blur_size, blur_size), 0)
+    clahe = cv2.createCLAHE(clipLimit=clahe_clip, tileGridSize=(clahe_tile, clahe_tile))
+    return clahe.apply(blurred)
+
+
+def weighted_gradient(img: np.ndarray, wx: float = 0.9, ksize: int = 3) -> np.ndarray:
+    """Combine the horizontal and vertical Sobel gradients with a weight.
+
+    .. math::
+
+        M = \\sqrt{w_x G_x^2 + (1 - w_x) G_y^2}
+
+    ``wx=1`` gives :math:`|G_x|` alone, ``wx=0`` gives :math:`|G_y|` alone.
+
+    Parameters
+    ----------
+    img : numpy.ndarray
+        Input grayscale image, usually the output of [`enhance_contrast`][].
+    wx : float, default 0.9
+        Weight of the horizontal gradient component.  Must be in [0, 1].
+    ksize : int, default 3
+        Sobel kernel size.  Values are coerced to the next odd integer.
+
+    Returns
+    -------
+    numpy.ndarray
+        Gradient magnitude, float64, unbounded.
+    """
+    ksize = int(ksize) | 1
+    sx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=ksize)
+    sy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=ksize)
+    return np.sqrt(wx * (sx**2) + (1.0 - wx) * (sy**2))
+
+
+def normalize_gradient(magnitude: np.ndarray, percentile: float = 99) -> np.ndarray:
+    """Clip the gradient at a percentile of the whole image, then rescale it to 0-255.
+
+    Clipping at a percentile rather than the maximum keeps a few very strong edges
+    from squashing everything else.  The threshold applied afterwards is therefore
+    relative to the image, not an absolute gradient value.
+
+    Parameters
+    ----------
+    magnitude : numpy.ndarray
+        Gradient magnitude, usually the output of [`weighted_gradient`][].
+    percentile : float, default 99
+        Percentile mapped to 255.
+
+    Returns
+    -------
+    numpy.ndarray
+        Normalised 8-bit image.
+    """
+    v_max = np.percentile(magnitude, percentile)
+    clipped = np.clip(magnitude, 0, v_max)
+    return cv2.normalize(clipped, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
 
 
 def apply_weighted_sobel(
@@ -60,54 +141,25 @@ def apply_weighted_sobel(
     clahe_clip: float = 3.0,
     clahe_tile: int = 8,
 ) -> np.ndarray:
-    """Apply CLAHE contrast enhancement and compute a weighted Sobel gradient.
+    """Enhance contrast, compute the weighted Sobel gradient and normalise it to 0-255.
 
-    The horizontal and vertical gradient components are combined as:
-
-    .. math::
-
-        M = \\sqrt{w_x G_x^2 + (1 - w_x) G_y^2}
-
-    Parameters
-    ----------
-    gray : numpy.ndarray
-        Input grayscale image.
-    wx : float, default 0.9
-        Weight of the horizontal gradient component.  Must be in [0, 1].
-    ksize : int, default 3
-        Sobel kernel size.  Values are coerced to the next odd integer.
-    blur_size : int, default 5
-        Gaussian blur kernel size applied before CLAHE.
-    clahe_clip : float, default 3.0
-        Clip limit used by CLAHE.
-    clahe_tile : int, default 8
-        Tile grid size used by CLAHE.  Values below 2 are rejected by OpenCV.
+    Runs [`enhance_contrast`][], [`weighted_gradient`][] and
+    [`normalize_gradient`][] in sequence; see them for the parameters.
 
     Returns
     -------
     numpy.ndarray
         Normalised 8-bit image containing the gradient magnitude.
     """
-    blurred = cv2.GaussianBlur(gray, (blur_size, blur_size), 0)
-    clahe = cv2.createCLAHE(clipLimit=clahe_clip, tileGridSize=(clahe_tile, clahe_tile))
-    enhanced = clahe.apply(blurred)
-
-    ksize = int(ksize) | 1
-    sx = cv2.Sobel(enhanced, cv2.CV_64F, 1, 0, ksize=ksize)
-    sy = cv2.Sobel(enhanced, cv2.CV_64F, 0, 1, ksize=ksize)
-
-    wy = 1.0 - wx
-    weighted_mag = np.sqrt(wx * (sx**2) + wy * (sy**2))
-
-    # Percentile-based normalisation for robustness under varying illumination
-    v_max = np.percentile(weighted_mag, 99)
-    weighted_mag = np.clip(weighted_mag, 0, v_max)
-
-    return cv2.normalize(weighted_mag, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+    enhanced = enhance_contrast(gray, blur_size=blur_size, clahe_clip=clahe_clip, clahe_tile=clahe_tile)
+    return normalize_gradient(weighted_gradient(enhanced, wx=wx, ksize=ksize))
 
 
 # ---------------------------------------------------------------------------
 # Pixel detection
+#
+# detect_pixels() chains threshold_roi() -> clean_detection() -> mask_to_coords(),
+# and clean_detection() chains close_gaps() -> keep_largest_component().
 # ---------------------------------------------------------------------------
 
 
@@ -130,11 +182,44 @@ def crop_roi(img: np.ndarray, roi: tuple) -> np.ndarray:
     return img[y : y + h, x : x + w]
 
 
+def threshold_roi(sobel_full: np.ndarray, roi: tuple, threshold: float) -> np.ndarray:
+    """Binary mask of the ROI pixels at or above ``threshold``.
+
+    Returns
+    -------
+    numpy.ndarray
+        Mask of the ROI's shape (uint8, values 0 or 255).
+    """
+    return (crop_roi(sobel_full, roi) >= threshold).astype(np.uint8) * 255
+
+
+def close_gaps(binary: np.ndarray, closing_kernel: int = 3) -> np.ndarray:
+    """Morphological closing (dilation then erosion) to fill small gaps along the stake.
+
+    ``closing_kernel`` is the side of the square structuring element; 1 returns
+    the mask unchanged.
+    """
+    if closing_kernel <= 1:
+        return binary
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (closing_kernel, closing_kernel))
+    return cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
+
+
+def keep_largest_component(mask: np.ndarray) -> np.ndarray:
+    """Keep only the largest connected component of a binary mask (uint8, 0 or 255)."""
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
+    if num_labels < 2:  # only background
+        return np.zeros_like(mask)
+
+    # stats[0] is the background, skip it
+    largest = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
+    return (labels == largest).astype(np.uint8) * 255
+
+
 def clean_detection(binary: np.ndarray, closing_kernel: int = 3) -> np.ndarray:
     """Clean a binary detection mask.
 
-    Applies a morphological closing to fill small gaps between detected
-    pixels, then keeps only the largest connected component to remove
+    Applies [`close_gaps`][], then [`keep_largest_component`][] to remove
     isolated noise.
 
     Parameters
@@ -150,22 +235,22 @@ def clean_detection(binary: np.ndarray, closing_kernel: int = 3) -> np.ndarray:
     numpy.ndarray
         Cleaned binary mask (uint8, values 0 or 255).
     """
-    mask = binary
-    if closing_kernel > 1:
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (closing_kernel, closing_kernel))
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    return keep_largest_component(close_gaps(binary, closing_kernel))
 
-    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask)
-    if num_labels < 2:  # only background
-        return np.zeros_like(binary)
 
-    # stats[0] is the background, skip it
-    largest = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
-    return (labels == largest).astype(np.uint8) * 255
+def mask_to_coords(mask: np.ndarray, roi: tuple) -> np.ndarray:
+    """Convert a ROI mask to full-image ``(x, y)`` coordinates, shape ``(n, 2)``."""
+    x, y, _, _ = roi
+    local_ys, local_xs = np.nonzero(mask)
+    if len(local_xs) == 0:
+        return np.empty((0, 2), dtype=int)
+    return np.column_stack([local_xs + x, local_ys + y])
 
 
 def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, closing_kernel: int = 3) -> np.ndarray:
     """Detect high-gradient pixels inside a region of interest.
+
+    Runs [`threshold_roi`][], [`clean_detection`][] and [`mask_to_coords`][].
 
     Parameters
     ----------
@@ -176,7 +261,7 @@ def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, closing_
     threshold : float
         Minimum Sobel magnitude required for a pixel to be retained.
     closing_kernel : int, default 3
-        Passed to :func:`clean_detection`. Set to 1 to disable the closing.
+        Passed to [`clean_detection`][]. Set to 1 to disable the closing.
 
     Returns
     -------
@@ -185,16 +270,8 @@ def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, closing_
         ``(x, y)`` image coordinates.  An empty integer array is returned when
         no pixels satisfy the threshold.
     """
-    x, y, w, h = roi
-    patch = sobel_full[y : y + h, x : x + w]
-
-    binary = (patch >= threshold).astype(np.uint8) * 255
-    binary = clean_detection(binary, closing_kernel)
-
-    local_ys, local_xs = np.where(binary > 0)
-    if len(local_xs) == 0:
-        return np.empty((0, 2), dtype=int)
-    return np.column_stack([local_xs + x, local_ys + y])
+    binary = threshold_roi(sobel_full, roi, threshold)
+    return mask_to_coords(clean_detection(binary, closing_kernel), roi)
 
 
 # ---------------------------------------------------------------------------
@@ -268,7 +345,7 @@ def detect_stakes(image_path: str, roi: tuple, best: dict) -> np.ndarray:
     best : dict
         Optimised parameter dictionary with keys ``wx``, ``threshold``,
         ``ksize``, ``clahe_clip``, and ``clahe_tile``.  Optional key
-        ``closing_kernel`` (default 3) is passed to :func:`detect_pixels`.
+        ``closing_kernel`` (default 3) is passed to [`detect_pixels`][].
 
     Returns
     -------

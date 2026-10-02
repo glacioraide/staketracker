@@ -5,8 +5,9 @@ DataFrames to disk.  All functions are intentionally simple so that the data
 provenance of every analysis run remains transparent.
 """
 
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Mapping
+
 import pandas as pd
 
 from . import __version__
@@ -27,7 +28,7 @@ def load_data(input_files: list[str | Path]) -> pd.DataFrame:
     -------
     pandas.DataFrame
         Concatenated DataFrame with ``creation_date`` parsed as
-        :class:`pandas.Timestamp`.
+        [`pandas.Timestamp`][].
 
     Raises
     ------
