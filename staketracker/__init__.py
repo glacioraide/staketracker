@@ -2,17 +2,18 @@
 
 The public API is organised into five focused sub-modules:
 
-* :mod:`staketracker.detection` — image loading, edge detection, pixel
+* [`staketracker.detection`][] — image loading, edge detection, pixel
   detection, and parameter optimisation.
-* :mod:`staketracker.filters` — time-series filtering, smoothing, and
+* [`staketracker.filters`][] — time-series filtering, smoothing, and
   unit conversion for detection results.
-* :mod:`staketracker.io` — loading and saving detection result CSV files.
-* :mod:`staketracker.meteo` — meteorological data retrieval via Open-Meteo.
-* :mod:`staketracker.plot` — detection overlays and time-series plots.
+* [`staketracker.io`][] — loading and saving detection result CSV files.
+* [`staketracker.meteo`][] — meteorological data retrieval via Open-Meteo.
+* [`staketracker.plot`][] — detection overlays and time-series plots.
 
-The most commonly used symbols are re-exported here for convenience so that
-``import staketracker; staketracker.detect_stakes(...)`` works without
-knowing which sub-module owns a function.
+The functions of a normal workflow (detect, filter, convert, plot) are
+re-exported here, so ``from staketracker import detect_stakes`` works.
+The individual detection steps, the filters and the parameter optimisation
+stay in their sub-module, e.g. ``from staketracker.detection import close_gaps``.
 """
 
 from importlib.metadata import PackageNotFoundError, version
@@ -22,33 +23,8 @@ try:
 except PackageNotFoundError:
     __version__ = "0+unknown"
 
-from .detection import (
-    load_gray,
-    enhance_contrast,
-    weighted_gradient,
-    normalize_gradient,
-    apply_weighted_sobel,
-    crop_roi,
-    threshold_roi,
-    close_gaps,
-    keep_largest_component,
-    clean_detection,
-    mask_to_coords,
-    detect_pixels,
-    stakes_vertical_size,
-    read_image_date,
-    detect_stakes,
-    pixel_iou,
-    objective,
-    optimize_params,
-)
-from .filters import (
-    filter_rapid_changes,
-    filter_min_max_height,
-    apply_filters,
-    add_moving_average,
-    convert_px_to_metres,
-)
+from .detection import detect_stakes, read_image_date, stakes_vertical_size
+from .filters import add_moving_average, apply_filters, convert_px_to_metres
 from .io import load_data, save_results
 from .meteo import fetch_weather_data
 from .plot import visualize
@@ -56,29 +32,14 @@ from .plot import visualize
 __all__ = [
     "__version__",
     # detection
-    "load_gray",
-    "enhance_contrast",
-    "weighted_gradient",
-    "normalize_gradient",
-    "apply_weighted_sobel",
-    "crop_roi",
-    "threshold_roi",
-    "close_gaps",
-    "keep_largest_component",
-    "clean_detection",
-    "mask_to_coords",
-    "detect_pixels",
-    "stakes_vertical_size",
-    "read_image_date",
     "detect_stakes",
-    "pixel_iou",
-    "objective",
-    "optimize_params",
-    "filter_rapid_changes",
-    "filter_min_max_height",
+    "read_image_date",
+    "stakes_vertical_size",
+    # filters
     "apply_filters",
     "add_moving_average",
     "convert_px_to_metres",
+    # io
     "load_data",
     "save_results",
     # meteo

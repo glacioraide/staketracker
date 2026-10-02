@@ -23,7 +23,6 @@ import pandas as pd
 import requests_cache
 from retry_requests import retry
 
-
 # Open-Meteo API endpoint for historical reanalysis data
 _ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 

@@ -92,7 +92,7 @@ def weighted_gradient(img: np.ndarray, wx: float = 0.9, ksize: int = 3) -> np.nd
     Parameters
     ----------
     img : numpy.ndarray
-        Input grayscale image, usually the output of :func:`enhance_contrast`.
+        Input grayscale image, usually the output of [`enhance_contrast`][].
     wx : float, default 0.9
         Weight of the horizontal gradient component.  Must be in [0, 1].
     ksize : int, default 3
@@ -119,7 +119,7 @@ def normalize_gradient(magnitude: np.ndarray, percentile: float = 99) -> np.ndar
     Parameters
     ----------
     magnitude : numpy.ndarray
-        Gradient magnitude, usually the output of :func:`weighted_gradient`.
+        Gradient magnitude, usually the output of [`weighted_gradient`][].
     percentile : float, default 99
         Percentile mapped to 255.
 
@@ -143,8 +143,8 @@ def apply_weighted_sobel(
 ) -> np.ndarray:
     """Enhance contrast, compute the weighted Sobel gradient and normalise it to 0-255.
 
-    Runs :func:`enhance_contrast`, :func:`weighted_gradient` and
-    :func:`normalize_gradient` in sequence; see them for the parameters.
+    Runs [`enhance_contrast`][], [`weighted_gradient`][] and
+    [`normalize_gradient`][] in sequence; see them for the parameters.
 
     Returns
     -------
@@ -219,7 +219,7 @@ def keep_largest_component(mask: np.ndarray) -> np.ndarray:
 def clean_detection(binary: np.ndarray, closing_kernel: int = 3) -> np.ndarray:
     """Clean a binary detection mask.
 
-    Applies :func:`close_gaps`, then :func:`keep_largest_component` to remove
+    Applies [`close_gaps`][], then [`keep_largest_component`][] to remove
     isolated noise.
 
     Parameters
@@ -250,7 +250,7 @@ def mask_to_coords(mask: np.ndarray, roi: tuple) -> np.ndarray:
 def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, closing_kernel: int = 3) -> np.ndarray:
     """Detect high-gradient pixels inside a region of interest.
 
-    Runs :func:`threshold_roi`, :func:`clean_detection` and :func:`mask_to_coords`.
+    Runs [`threshold_roi`][], [`clean_detection`][] and [`mask_to_coords`][].
 
     Parameters
     ----------
@@ -261,7 +261,7 @@ def detect_pixels(sobel_full: np.ndarray, roi: tuple, threshold: float, closing_
     threshold : float
         Minimum Sobel magnitude required for a pixel to be retained.
     closing_kernel : int, default 3
-        Passed to :func:`clean_detection`. Set to 1 to disable the closing.
+        Passed to [`clean_detection`][]. Set to 1 to disable the closing.
 
     Returns
     -------
@@ -345,7 +345,7 @@ def detect_stakes(image_path: str, roi: tuple, best: dict) -> np.ndarray:
     best : dict
         Optimised parameter dictionary with keys ``wx``, ``threshold``,
         ``ksize``, ``clahe_clip``, and ``clahe_tile``.  Optional key
-        ``closing_kernel`` (default 3) is passed to :func:`detect_pixels`.
+        ``closing_kernel`` (default 3) is passed to [`detect_pixels`][].
 
     Returns
     -------

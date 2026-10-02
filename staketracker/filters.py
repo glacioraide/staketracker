@@ -1,6 +1,6 @@
 """Time-series filtering and unit-conversion functions for stake measurements.
 
-This module operates on :class:`pandas.DataFrame` objects produced by the
+This module operates on [`pandas.DataFrame`][] objects produced by the
 detection pipeline.  All functions are **pure** (they return new DataFrames)
 and can therefore be chained without side effects.
 """
@@ -77,9 +77,9 @@ def apply_filters(results: pd.DataFrame) -> pd.DataFrame:
 
     1. Drop rows with a missing ``creation_date``.
     2. Remove rows outside the physically plausible height range
-       (:func:`filter_min_max_height`).
+       ([`filter_min_max_height`][]).
     3. Remove rows with rapid, non-physical height jumps
-       (:func:`filter_rapid_changes`).
+       ([`filter_rapid_changes`][]).
 
     Parameters
     ----------
@@ -113,7 +113,7 @@ def add_moving_average(
     ----------
     results : pandas.DataFrame
         Must contain ``creation_date`` and ``balise_height_px`` columns.
-        ``creation_date`` is coerced to :class:`pandas.Timestamp` if needed.
+        ``creation_date`` is coerced to [`pandas.Timestamp`][] if needed.
     rolling_window : str, default "24h"
         Pandas offset string defining the rolling window (e.g. ``"24h"``,
         ``"7D"``).
