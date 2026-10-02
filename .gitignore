@@ -212,6 +212,7 @@ __marimo__/
 
 # Project custom ignore rules
 *.JPG
+!tests/data/**/*.JPG
 *.png
 analysis/
 _version.py

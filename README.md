@@ -5,12 +5,15 @@ of stake height, and estimating snow level through filtering and calibration.
 
 Alpha version under rapid changes.
 
+API documentation: https://glacioraide.github.io/staketracker/
+
 ## Installation
 
 Requires Python 3.12 or later. Pick one of the two options below.
 
 Optional extras:
 - `dev`: ruff and pytest
+- `docs`: Zensical and mkdocstrings, to build the API documentation
 - `jupyter`: JupyterLab and ipywidgets, needed for the notebooks
 
 ### Option A: uv (recommended)
@@ -171,8 +174,28 @@ print(df.head())
 ## Running tests
 
 ```bash
-pytest -v
+pytest -v                       # all tests
+pytest -v -m "not integration"  # unit tests only, under a second
 ```
+
+Integration tests run the detection and the scripts on six real photos stored in `tests/data`
+(see `tests/data/README.md`). One of them also runs `notebooks/pipeline_step_by_step.ipynb`; it is skipped
+if the `jupyter` extra is not installed.
+
+## Building the documentation
+
+The API docs are built with [Zensical](https://zensical.org) from the docstrings, and published to GitHub Pages
+on every push to `main` (`.github/workflows/docs.yml`). To preview locally:
+
+```bash
+uv sync --extra docs
+zensical serve   # http://localhost:8000
+```
+
+## How detection works
+
+`notebooks/pipeline_step_by_step.ipynb` walks through the detection on the test images, one step at a time,
+with the intermediate images: grayscale, CLAHE, weighted Sobel gradient, threshold, cleaning, height.
 
 ## Notes
 
