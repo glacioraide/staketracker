@@ -3,7 +3,7 @@
 
 For each JPEG in the input directory the Sobel-based detection pipeline is
 applied to a user-defined region of interest (ROI).  Results are accumulated
-and written as ``detection_results.csv`` in a date-stamped output directory.
+and written as ``detection_results.csv`` in the output directory.
 
 Usage example::
 
@@ -106,7 +106,7 @@ def main() -> None:
         "-o",
         default="detection",
         metavar="DIR",
-        help="Base name for the output directory (run date is appended automatically)",
+        help="Output directory, created if needed",
     )
     parser.add_argument(
         "--roi",

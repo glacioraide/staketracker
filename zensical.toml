@@ -10,14 +10,29 @@ site_dir = "site"
 
 nav = [
     { "Home" = "index.md" },
-    { "Detection step by step" = "notebooks/pipeline_step_by_step.md" },
-    { "API reference" = [
-        "api/index.md",
-        "api/detection.md",
-        "api/filters.md",
-        "api/io.md",
-        "api/meteo.md",
-        "api/plot.md",
+    { "Tutorial" = "tutorial.md" },
+    { "How-to guides" = [
+        "how-to/install.md",
+        "how-to/roi-threshold.md",
+        "how-to/snow-level.md",
+        "how-to/weather.md",
+        "how-to/python.md",
+    ] },
+    { "Reference" = [
+        "reference/cli.md",
+        "reference/output-files.md",
+        { "Python API" = [
+            "api/index.md",
+            "api/detection.md",
+            "api/filters.md",
+            "api/io.md",
+            "api/meteo.md",
+            "api/plot.md",
+        ] },
+    ] },
+    { "Explanation" = [
+        "notebooks/pipeline_step_by_step.md",
+        "explanation/snow-level.md",
     ] },
 ]
 
@@ -83,3 +98,5 @@ show_source = true
 members_order = "source"
 merge_init_into_class = true
 filters = ["!^_"]
+
+[project.plugins.markdown-exec]

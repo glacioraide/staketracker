@@ -6,7 +6,7 @@ This script consumes one or more ``detection_results.csv`` files produced by
 heights to metres, and derives the snow level relative to the maximum observed
 stake height.
 
-Results are saved in a date-stamped output directory.  An optional
+Results are saved in the output directory.  An optional
 meteorological CSV (produced by ``scripts/fetch_meteo.py``) can be supplied to
 generate combined precipitation + snow-level plots.
 
@@ -53,7 +53,7 @@ def main() -> None:
         "-o",
         default="analysis_results",
         metavar="DIR",
-        help="Base name for the output directory (run date is appended automatically)",
+        help="Output directory, created if needed",
     )
     parser.add_argument(
         "--px-per-metre",
