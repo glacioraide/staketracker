@@ -44,7 +44,7 @@ def filter_rapid_changes(
 def filter_min_max_height(
     results: pd.DataFrame,
     min_height: int = 10,
-    max_height: int = 67,
+    max_height: int = 100,
 ) -> pd.DataFrame:
     """Remove rows outside the physically plausible height range.
 
@@ -54,7 +54,7 @@ def filter_min_max_height(
         DataFrame with a ``balise_height_px`` column.
     min_height : int, default 10
         Minimum acceptable height (pixels).
-    max_height : int, default 67
+    max_height : int, default 100
         Maximum acceptable height (pixels).
 
     Returns
