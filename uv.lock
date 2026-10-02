@@ -1099,6 +1099,18 @@ wheels = [
 ]
 
 [[package]]
+name = "markdown-exec"
+version = "1.12.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pymdown-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6d/76/c47da8edb6a12b066728432fb3724109d9d91de5331df5073d12d272493f/markdown_exec-1.12.3.tar.gz", hash = "sha256:006b9cac46470a9499797bc9c579305ae4719e0a8e495e5401dfbf1e66ce7fb4", size = 77841, upload-time = "2026-07-07T09:53:13.838Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ad/a7/0279016386d611183ccc508c5688eb1e2133e8182164d7a2c6213b176f69/markdown_exec-1.12.3-py3-none-any.whl", hash = "sha256:48ac12a565f3f4331b1acd9efc48a0773e717eb7ca7c38e23c1d72ee61660de6", size = 37995, upload-time = "2026-07-07T09:53:12.619Z" },
+]
+
+[[package]]
 name = "markupsafe"
 version = "3.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2370,6 +2382,7 @@ dev = [
     { name = "ruff" },
 ]
 docs = [
+    { name = "markdown-exec" },
     { name = "mkdocstrings-python" },
     { name = "zensical" },
 ]
@@ -2382,6 +2395,7 @@ jupyter = [
 requires-dist = [
     { name = "ipywidgets", marker = "extra == 'jupyter'", specifier = ">=8.1.8" },
     { name = "jupyterlab", marker = "extra == 'jupyter'", specifier = ">=4.5.6" },
+    { name = "markdown-exec", marker = "extra == 'docs'" },
     { name = "matplotlib" },
     { name = "mkdocstrings-python", marker = "extra == 'docs'" },
     { name = "numpy" },
