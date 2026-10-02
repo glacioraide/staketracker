@@ -37,9 +37,9 @@ from staketracker.detection import (
     stakes_vertical_size,
     detect_stakes,
     read_image_date,
-    visualize,
 )
 from staketracker.io import save_results
+from staketracker.plot import visualize
 
 
 # ---------------------------------------------------------------------------
