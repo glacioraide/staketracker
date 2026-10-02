@@ -35,6 +35,10 @@ jupyter = [
 [tool.setuptools.packages.find]
 include = ["staketracker*"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: end-to-end tests on the real images in tests/data"]
+
 [tool.ruff]
 line-length = 120
 target-version = "py312"

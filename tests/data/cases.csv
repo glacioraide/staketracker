@@ -1,0 +1,9 @@
+# Expected detection results for the test images, produced by staketracker 0.1.dev12 on 2026-04-29
+# and checked visually on the annotated images. Detection parameters: wx=0.9, ksize=1, clahe_clip=1.0, clahe_tile=2.
+period,image,roi_x,roi_y,roi_w,roi_h,threshold,height_px,y_min,y_max,creation_date,note
+linceul_20240717-20241110,RCNX0452.JPG,1535,330,30,80,140,62,346,407,2024-08-31 14:00:00,clear stake
+linceul_20240717-20241110,RCNX0579.JPG,1535,330,30,80,140,0,,,2024-09-13 11:00:00,fog: stake not visible
+linceul_20241111-20250331,RCNX1313.JPG,1510,330,40,100,200,42,340,381,2025-03-21 12:00:00,clear stake
+linceul_20241111-20250331,RCNX0373.JPG,1510,330,40,100,200,0,,,2024-12-17 12:00:00,fog: stake not visible
+linceul_20250401-20251010,RCNX2325.JPG,1820,310,50,140,140,77,333,409,2025-06-30 14:00:00,clear stake; above the 67 px max_height filter
+linceul_20250401-20251010,RCNX1995.JPG,1820,310,50,140,140,54,330,383,2025-05-28 14:00:00,clear stake
