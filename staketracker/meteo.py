@@ -35,6 +35,8 @@ _DAILY_VARIABLES = [
     "snowfall_sum",
     "precipitation_hours",
     "temperature_2m_mean",
+    "shortwave_radiation_sum",
+    "wind_direction_10m_dominant",
 ]
 
 
