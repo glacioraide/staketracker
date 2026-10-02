@@ -216,3 +216,5 @@ __marimo__/
 *.png
 analysis/
 _version.py
+# Generated from notebooks/ by nbconvert at build time
+docs/notebooks/

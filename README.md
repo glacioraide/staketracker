@@ -184,11 +184,13 @@ if the `jupyter` extra is not installed.
 
 ## Building the documentation
 
-The API docs are built with [Zensical](https://zensical.org) from the docstrings, and published to GitHub Pages
-on every push to `main` (`.github/workflows/docs.yml`). To preview locally:
+The docs are built with [Zensical](https://zensical.org) from the docstrings and the step-by-step notebook,
+and published to GitHub Pages on every push to `main` (`.github/workflows/docs.yml`). Zensical cannot read
+notebooks, so the notebook is executed and converted to Markdown first. To preview locally:
 
 ```bash
-uv sync --extra docs
+uv sync --extra docs --extra jupyter
+jupyter nbconvert --execute --to markdown notebooks/pipeline_step_by_step.ipynb --output-dir docs/notebooks
 zensical serve   # http://localhost:8000
 ```
 
@@ -196,6 +198,7 @@ zensical serve   # http://localhost:8000
 
 `notebooks/pipeline_step_by_step.ipynb` walks through the detection on the test images, one step at a time,
 with the intermediate images: grayscale, CLAHE, weighted Sobel gradient, threshold, cleaning, height.
+The executed notebook is on the [docs site](https://glacioraide.github.io/staketracker/notebooks/pipeline_step_by_step/).
 
 ## Notes
 

@@ -10,6 +10,7 @@ site_dir = "site"
 
 nav = [
     { "Home" = "index.md" },
+    { "Detection step by step" = "notebooks/pipeline_step_by_step.md" },
     { "API reference" = [
         "api/index.md",
         "api/detection.md",
