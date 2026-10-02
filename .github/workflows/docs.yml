@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/configure-pages@v6
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0
       # The package and jupyter are needed to run the notebook; versions come from uv.lock.
       - run: uv sync --locked --extra docs --extra jupyter
       - run: uv run jupyter nbconvert --execute --to markdown notebooks/pipeline_step_by_step.ipynb --output-dir docs/notebooks
