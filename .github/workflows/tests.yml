@@ -1,0 +1,22 @@
+name: Tests
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+      # jupyter is needed by the integration test that runs the step-by-step notebook.
+      - run: uv sync --locked --extra dev --extra jupyter
+      - run: uv run ruff check staketracker tests
+      - run: uv run pytest -v

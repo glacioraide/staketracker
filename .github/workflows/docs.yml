@@ -3,30 +3,40 @@ on:
   push:
     branches:
       - main
+  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  # Runs on pull requests too, so a broken build is caught before it reaches main.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+      # The package and jupyter are needed to run the notebook; versions come from uv.lock.
+      - run: uv sync --locked --extra docs --extra jupyter
+      - run: uv run jupyter nbconvert --execute --to markdown notebooks/pipeline_step_by_step.ipynb --output-dir docs/notebooks
+      # --strict fails on warnings such as broken links.
+      - run: uv run zensical build --clean --strict
+      - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request'
+        with:
+          path: site
   deploy:
+    needs: build
+    if: github.event_name != 'pull_request'
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/configure-pages@v6
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0
-      # The package and jupyter are needed to run the notebook; versions come from uv.lock.
-      - run: uv sync --locked --extra docs --extra jupyter
-      - run: uv run jupyter nbconvert --execute --to markdown notebooks/pipeline_step_by_step.ipynb --output-dir docs/notebooks
-      - run: uv run zensical build --clean
-      - uses: actions/upload-pages-artifact@v5
-        with:
-          path: site
       - uses: actions/deploy-pages@v5
         id: deployment
