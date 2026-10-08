@@ -39,6 +39,17 @@ _DAILY_VARIABLES = [
 ]
 
 
+_HOURLY_VARIABLES = [
+    "weather_code",
+    "precipitation_sum",
+    "rain_sum",
+    "snowfall_sum",
+    "precipitation_hours",
+    "temperature_2m_mean",
+    "shortwave_radiation_sum",
+    "wind_direction_10m_dominant",
+]
+
 def _build_client(cache_dir: str = ".cache") -> openmeteo_requests.Client:
     """Create an Open-Meteo client with on-disk caching and automatic retries.
 
@@ -96,6 +107,7 @@ def fetch_weather_data(
         "start_date": start_date,
         "end_date": end_date,
         "daily": _DAILY_VARIABLES,
+
     }
 
     responses = client.weather_api(_ARCHIVE_URL, params=params)
